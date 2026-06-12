@@ -197,6 +197,13 @@ func InitialSettings() []model.SettingItem {
 		{Key: conf.SSODefaultPermission, Value: "0", Type: conf.TypeNumber, Group: model.SSO, Flag: model.PRIVATE},
 		{Key: conf.SSOCompatibilityMode, Value: "false", Type: conf.TypeBool, Group: model.SSO, Flag: model.PUBLIC},
 
+		// Kratos settings
+		{Key: conf.KratosEnabled, Value: "false", Type: conf.TypeBool, Group: model.SSO, Flag: model.PUBLIC},
+		{Key: conf.KratosPublicUrl, Value: "", Type: conf.TypeString, Group: model.SSO, Flag: model.PRIVATE},
+		{Key: conf.KratosAutoRegister, Value: "true", Type: conf.TypeBool, Group: model.SSO, Flag: model.PRIVATE},
+		{Key: conf.KratosDefaultRole, Value: "2", Type: conf.TypeNumber, Group: model.SSO, Flag: model.PRIVATE},
+		{Key: conf.KratosDefaultDir, Value: "/", Type: conf.TypeString, Group: model.SSO, Flag: model.PRIVATE},
+
 		// ldap settings
 		{Key: conf.LdapLoginEnabled, Value: "false", Type: conf.TypeBool, Group: model.LDAP, Flag: model.PUBLIC},
 		{Key: conf.LdapServer, Value: "", Type: conf.TypeString, Group: model.LDAP, Flag: model.PRIVATE},

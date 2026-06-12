@@ -101,6 +101,13 @@ const (
 	SSODefaultPermission = "sso_default_permission"
 	SSOCompatibilityMode = "sso_compatibility_mode"
 
+	// Kratos
+	KratosEnabled        = "kratos_enabled"
+	KratosPublicUrl      = "kratos_public_url"
+	KratosAutoRegister   = "kratos_auto_register"
+	KratosDefaultRole    = "kratos_default_role"
+	KratosDefaultDir     = "kratos_default_dir"
+
 	// ldap
 	LdapLoginEnabled      = "ldap_login_enabled"
 	LdapServer            = "ldap_server"
