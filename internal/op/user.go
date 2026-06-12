@@ -102,6 +102,13 @@ func GetUserByName(username string) (*model.User, error) {
 	return user, err
 }
 
+func GetUserBySsoID(ssoID string) (*model.User, error) {
+	if ssoID == "" {
+		return nil, errs.EmptyUsername
+	}
+	return db.GetUserBySSOID(ssoID)
+}
+
 func GetUserById(id uint) (*model.User, error) {
 	return db.GetUserById(id)
 }
