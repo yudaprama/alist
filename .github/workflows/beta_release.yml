@@ -57,21 +57,30 @@ jobs:
     strategy:
       matrix:
         include:
-          - target: '!(*musl*|*windows-arm64*|*android*|*freebsd*)' # xgo
+          - target: '!(*musl*|*windows-arm64*|*android*|*freebsd*|*darwin*)' # xgo
             hash: "md5"
+            platform: ubuntu-latest
           - target: 'linux-!(arm*)-musl*' #musl-not-arm
             hash: "md5-linux-musl"
+            platform: ubuntu-latest
           - target: 'linux-arm*-musl*' #musl-arm
             hash: "md5-linux-musl-arm"
+            platform: ubuntu-latest
           - target: 'windows-arm64' #win-arm64
             hash: "md5-windows-arm64"
+            platform: ubuntu-latest
           - target: 'android-*' #android
             hash: "md5-android"
+            platform: ubuntu-latest
           - target: 'freebsd-*' #freebsd
             hash: "md5-freebsd"
+            platform: ubuntu-latest
+          - target: 'darwin-*' #darwin
+            hash: "md5-darwin"
+            platform: macos-latest
 
     name: Beta Release
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.platform }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -86,7 +95,8 @@ jobs:
       - name: Setup web
         run: bash build.sh dev web
 
-      - name: Build
+      - name: Build (Linux)
+        if: runner.os == 'Linux'
         uses: go-cross/cgo-actions@v1
         with:
           targets: ${{ matrix.target }}
@@ -98,6 +108,25 @@ jobs:
             github.com/alist-org/alist/v3/internal/conf.GitCommit=$git_commit
             github.com/alist-org/alist/v3/internal/conf.Version=$tag
             github.com/alist-org/alist/v3/internal/conf.WebVersion=dev
+
+      - name: Build (macOS)
+        if: runner.os == 'macOS'
+        env:
+          CGO_ENABLED: 1
+        run: |
+          os=$(echo ${{ matrix.target }} | cut -d'-' -f1)
+          arch=$(echo ${{ matrix.target }} | cut -d'-' -f2)
+          built_at="$(date +'%F %T %z')"
+          git_commit=$(git log --pretty=format:"%h" -1)
+          tag=$(git describe --tags --abbrev=0 2>/dev/null || echo dev)
+          GOOS=$os GOARCH=$arch go build -o build/alist-$os-$arch \
+            -ldflags "-w -s \
+              -X 'github.com/alist-org/alist/v3/internal/conf.BuiltAt=$built_at' \
+              -X 'github.com/alist-org/alist/v3/internal/conf.GitAuthor=Xhofe' \
+              -X 'github.com/alist-org/alist/v3/internal/conf.GitCommit=$git_commit' \
+              -X 'github.com/alist-org/alist/v3/internal/conf.Version=$tag' \
+              -X 'github.com/alist-org/alist/v3/internal/conf.WebVersion=dev'" \
+            -tags=jsoniter .
 
       - name: Compress
         run: |

@@ -257,6 +257,19 @@ BuildReleaseFreeBSD() {
   done
 }
 
+BuildReleaseDarwin() {
+  rm -rf .git/
+  mkdir -p "build"
+  OS_ARCHES=(amd64 arm64)
+  for arch in "${OS_ARCHES[@]}"; do
+    echo building for darwin-${arch}
+    export GOOS=darwin
+    export GOARCH=${arch}
+    export CGO_ENABLED=1
+    go build -o ./build/$appName-darwin-${arch} -ldflags="$ldflags" -tags=jsoniter .
+  done
+}
+
 MakeRelease() {
   cd build
   mkdir compress
@@ -324,6 +337,9 @@ elif [ "$1" = "release" -o "$1" = "beta" ]; then
   elif [ "$2" = "freebsd" ]; then
     BuildReleaseFreeBSD
     MakeRelease "md5-freebsd.txt"
+  elif [ "$2" = "darwin" ]; then
+    BuildReleaseDarwin
+    MakeRelease "md5-darwin.txt"
   elif [ "$2" = "web" ]; then
     echo "web only"
   else
