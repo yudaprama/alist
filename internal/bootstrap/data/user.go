@@ -66,5 +66,16 @@ func initUser() {
 		} else {
 			utils.Log.Fatalf("[init user] Failed to get admin user: %v", err)
 		}
+	} else if len(envpass) > 0 {
+		// Force-update password on every start if ALIST_ADMIN_PASSWORD env is set,
+		// so the admin credential in .env remains authoritative across restarts.
+		salt := random.String(16)
+		admin.Salt = salt
+		admin.PwdHash = model.TwoHashPwd(adminPassword, salt)
+		if err := op.UpdateUser(admin); err != nil {
+			utils.Log.Errorf("[init user] Failed to update admin password from env: %v", err)
+		} else {
+			utils.Log.Infof("[init user] Admin password synced from ALIST_ADMIN_PASSWORD env")
+		}
 	}
 }

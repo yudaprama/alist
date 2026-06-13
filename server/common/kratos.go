@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"os"
+	"path/filepath"
 	"sync"
 	"time"
 
@@ -230,6 +232,14 @@ func GetOrCreateKratosUser(session *KratosSession) (*model.User, error) {
 			return u, nil
 		}
 		return nil, err
+	}
+
+	// Auto-create user directory under storage root (lazy init)
+	// Matches main.go default: ~/data/alist-files/<identity_id>/
+	storagePath := os.Getenv("ALIST_STORAGE_PATH")
+	if storagePath != "" {
+		userDir := filepath.Join(storagePath, session.Identity.GetId())
+		_ = os.MkdirAll(userDir, 0755) // best-effort, non-fatal
 	}
 
 	return user, nil
