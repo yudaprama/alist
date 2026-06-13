@@ -1,6 +1,7 @@
 package data
 
 import (
+	"os"
 	"strconv"
 
 	"github.com/alist-org/alist/v3/cmd/flags"
@@ -71,6 +72,26 @@ func initSettings() {
 			utils.Log.Fatalf("failed save setting: %+v", err)
 		} else {
 			op.SettingCacheUpdate()
+		}
+	}
+
+	// ALIST_ADMIN_TOKEN env override (runs on every start, not just first run).
+	// If the env var is set, force-update the token row in the DB so the
+	// admin token in .env remains authoritative across restarts.
+	if envToken := os.Getenv("ALIST_ADMIN_TOKEN"); envToken != "" {
+		stored, err := op.GetSettingItemByKey(conf.Token)
+		if err != nil {
+			utils.Log.Errorf("failed to load token for env override: %+v", err)
+			return
+		}
+		if stored != nil && stored.Value != envToken {
+			utils.Log.Infof("overriding admin token from ALIST_ADMIN_TOKEN env")
+			stored.Value = envToken
+			if err := op.SaveSettingItem(stored); err != nil {
+				utils.Log.Errorf("failed to save overridden admin token: %+v", err)
+			} else {
+				op.SettingCacheUpdate()
+			}
 		}
 	}
 }
@@ -264,6 +285,19 @@ func InitialSettings() []model.SettingItem {
 			{Key: "test_options", Value: "a", Type: conf.TypeSelect, Options: "a,b,c"},
 			{Key: "test_help", Type: conf.TypeString, Help: "this is a help message"},
 		}...)
+	}
+
+	// ALIST_ADMIN_TOKEN env override: force admin token to a known value
+	// so .env / orchestrator config remains authoritative across restarts.
+	// This runs after the random token would be generated, replacing it
+	// before the row is persisted.
+	if envToken := os.Getenv("ALIST_ADMIN_TOKEN"); envToken != "" {
+		for i := range initialSettingItems {
+			if initialSettingItems[i].Key == conf.Token {
+				initialSettingItems[i].Value = envToken
+				break
+			}
+		}
 	}
 	return initialSettingItems
 }
