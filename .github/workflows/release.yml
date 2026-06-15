@@ -1,92 +1,156 @@
-name: release
+name: Build & Release
 
 on:
-  release:
-    types: [ published ]
+  push:
+    branches: [main]
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
-  release:
+  build:
+    name: Build ${{ matrix.target }}
+    runs-on: ${{ matrix.runner }}
     strategy:
+      fail-fast: false
       matrix:
-        platform: [ ubuntu-latest ]
-        go-version: [ '1.21' ]
-    name: Release
-    runs-on: ${{ matrix.platform }}
+        include:
+          - target: linux-amd64
+            runner: ubuntu-latest
+            musl: true
+          - target: linux-arm64
+            runner: ubuntu-latest
+            musl: true
+          - target: darwin-amd64
+            runner: macos-latest
+            musl: false
+          - target: darwin-arm64
+            runner: macos-latest
+            musl: false
     steps:
-
-      - name: Free Disk Space (Ubuntu)
-        uses: jlumbroso/free-disk-space@main
-        with:
-          # this might remove tools that are actually needed,
-          # if set to "true" but frees about 6 GB
-          tool-cache: false
-          
-          # all of these default to true, but feel free to set to
-          # "false" if necessary for your workflow
-          android: true
-          dotnet: true
-          haskell: true
-          large-packages: true
-          docker-images: true
-          swap-storage: true
-
-      - name: Prerelease
-        uses: irongut/EditRelease@v1.2.0
-        with:
-          token: ${{ secrets.MY_TOKEN }}
-          id: ${{ github.event.release.id }}
-          prerelease: true
-
-      - name: Setup Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: ${{ matrix.go-version }}
-
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Install dependencies
-        run: |
-          sudo snap install zig --classic --beta
-          docker pull crazymax/xgo:latest
-          go install github.com/crazy-max/xgo@latest
-          sudo apt install upx
-
-      - name: Build
-        run: |
-          bash build.sh release
-
-      - name: Upload assets
-        uses: softprops/action-gh-release@v2
+      - uses: actions/setup-go@v5
         with:
-          files: build/compress/*
-          prerelease: false
+          go-version: "1.25"
+          cache: true
 
-  release_desktop:
-    needs: release
-    name: Release desktop
+      - name: Determine version
+        id: ver
+        run: |
+          if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
+            VERSION="${GITHUB_REF#refs/tags/}"
+          else
+            VERSION="v0.0.${GITHUB_RUN_NUMBER}-$(echo "${GITHUB_SHA::7}")"
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Version: $VERSION"
+
+      - name: Fetch web dist
+        run: |
+          mkdir -p public
+          curl -L https://github.com/alist-org/alist-web/releases/latest/download/dist.tar.gz -o dist.tar.gz
+          tar -zxvf dist.tar.gz -C public
+          rm -f dist.tar.gz
+
+      - name: Build (Linux, musl)
+        if: matrix.musl
+        uses: go-cross/cgo-actions@v1
+        with:
+          targets: ${{ matrix.target }}
+          musl-target-format: $os-$musl-$arch
+          out-dir: build
+          x-flags: |
+            github.com/alist-org/alist/v3/internal/conf.BuiltAt=$built_at
+            github.com/alist-org/alist/v3/internal/conf.GitAuthor=Xhofe
+            github.com/alist-org/alist/v3/internal/conf.GitCommit=$git_commit
+            github.com/alist-org/alist/v3/internal/conf.Version=$tag
+            github.com/alist-org/alist/v3/internal/conf.WebVersion=$web_version
+
+      - name: Build (macOS, cgo)
+        if: matrix.runner == 'macos-latest'
+        env:
+          CGO_ENABLED: "1"
+        run: |
+          os=$(echo ${{ matrix.target }} | cut -d'-' -f1)
+          arch=$(echo ${{ matrix.target }} | cut -d'-' -f2)
+          built_at="$(date +'%F %T %z')"
+          git_author="Xhofe <i@nn.ci>"
+          git_commit=$(git log --pretty=format:"%h" -1)
+          version=${{ steps.ver.outputs.version }}
+          web_version=$(curl -sL "https://api.github.com/repos/alist-org/alist-web/releases/latest" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g')
+          mkdir -p build
+          GOOS=$os GOARCH=$arch go build -o build/alist-$os-$arch \
+            -ldflags "-w -s \
+              -X 'github.com/alist-org/alist/v3/internal/conf.BuiltAt=$built_at' \
+              -X 'github.com/alist-org/alist/v3/internal/conf.GitAuthor=$git_author' \
+              -X 'github.com/alist-org/alist/v3/internal/conf.GitCommit=$git_commit' \
+              -X 'github.com/alist-org/alist/v3/internal/conf.Version=$version' \
+              -X 'github.com/alist-org/alist/v3/internal/conf.WebVersion=$web_version'" \
+            .
+
+      - name: Pack archive
+        env:
+          VERSION: ${{ steps.ver.outputs.version }}
+        run: |
+          os=$(echo ${{ matrix.target }} | cut -d'-' -f1)
+          arch=$(echo ${{ matrix.target }} | cut -d'-' -f2)
+          STAGE="alist-${{ matrix.target }}"
+          rm -rf "${STAGE}" && mkdir -p "${STAGE}"
+          cp "build/alist-${os}-${arch}" "${STAGE}/alist"
+          tar -C "${STAGE}" -czf "alist-${VERSION}-${{ matrix.target }}.tar.gz" .
+          sha256sum "alist-${VERSION}-${{ matrix.target }}.tar.gz" \
+            > "alist-${VERSION}-${{ matrix.target }}.tar.gz.sha256"
+          ls -lh
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: alist-${{ matrix.target }}
+          path: |
+            alist-${{ steps.ver.outputs.version }}-${{ matrix.target }}.tar.gz
+            alist-${{ steps.ver.outputs.version }}-${{ matrix.target }}.tar.gz.sha256
+          retention-days: 30
+
+  release:
+    name: Publish release
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
-        with:
-          repository: AlistGo/desktop-release
-          ref: main
-          persist-credentials: false
-          fetch-depth: 0
+      - uses: actions/checkout@v4
 
-      - name: Add tag
+      - name: Determine version
+        id: ver
         run: |
-          git config --local user.email "bot@nn.ci"
-          git config --local user.name "IlaBot"
-          version=$(wget -qO- -t1 -T2 "https://api.github.com/repos/alist-org/alist/releases/latest" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g')
-          git tag -a $version -m "release $version"
+          VERSION="${GITHUB_REF#refs/tags/}"
+          if [[ "$VERSION" == *-* ]]; then
+            IS_PRERELEASE=true
+          else
+            IS_PRERELEASE=false
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "is_prerelease=$IS_PRERELEASE" >> "$GITHUB_OUTPUT"
 
-      - name: Push tags
-        uses: ad-m/github-push-action@master
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
         with:
-          github_token: ${{ secrets.MY_TOKEN }}
-          branch: main
-          repository: AlistGo/desktop-release
+          path: dist
+          merge-multiple: true
+
+      - name: List artifacts
+        run: ls -lh dist/
+
+      - name: Create or update release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.ver.outputs.version }}
+          name: Release ${{ steps.ver.outputs.version }}
+          generate_release_notes: true
+          prerelease: ${{ steps.ver.outputs.is_prerelease == 'true' }}
+          files: |
+            dist/*.tar.gz
+            dist/*.sha256
