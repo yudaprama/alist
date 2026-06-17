@@ -567,6 +567,7 @@ func Put(ctx context.Context, storage driver.Driver, dstDirPath string, file mod
 		if err == nil {
 			if newObj != nil {
 				addCacheObj(storage, dstDirPath, model.WrapObjName(newObj))
+				HandleFileUploadedHook(ctx, storage, dstDirPath, newObj)
 			} else if !utils.IsBool(lazyCache...) {
 				ClearCache(storage, dstDirPath)
 			}
