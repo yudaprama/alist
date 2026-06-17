@@ -50,13 +50,6 @@ jobs:
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "Version: $VERSION"
 
-      - name: Fetch web dist
-        run: |
-          mkdir -p public
-          curl -L https://github.com/alist-org/alist-web/releases/latest/download/dist.tar.gz -o dist.tar.gz
-          tar -zxvf dist.tar.gz -C public
-          rm -f dist.tar.gz
-
       - name: Build (Linux, musl)
         if: matrix.musl
         uses: go-cross/cgo-actions@v1
@@ -69,7 +62,7 @@ jobs:
             github.com/alist-org/alist/v3/internal/conf.GitAuthor=Xhofe
             github.com/alist-org/alist/v3/internal/conf.GitCommit=$git_commit
             github.com/alist-org/alist/v3/internal/conf.Version=$tag
-            github.com/alist-org/alist/v3/internal/conf.WebVersion=$web_version
+            github.com/alist-org/alist/v3/internal/conf.WebVersion=none
 
       - name: Build (macOS, cgo)
         if: matrix.runner == 'macos-latest'
@@ -82,7 +75,8 @@ jobs:
           git_author="Xhofe <i@nn.ci>"
           git_commit=$(git log --pretty=format:"%h" -1)
           version=${{ steps.ver.outputs.version }}
-          web_version=$(curl -sL "https://api.github.com/repos/alist-org/alist-web/releases/latest" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g')
+          web_version="none"
+
           mkdir -p build
           GOOS=$os GOARCH=$arch go build -o build/alist-$os-$arch \
             -ldflags "-w -s \

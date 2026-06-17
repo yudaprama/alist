@@ -11,7 +11,6 @@ import (
 	"github.com/alist-org/alist/v3/internal/sign"
 	"github.com/alist-org/alist/v3/pkg/utils/random"
 	"github.com/alist-org/alist/v3/server/common"
-	"github.com/alist-org/alist/v3/server/static"
 	"github.com/gin-gonic/gin"
 )
 
@@ -128,7 +127,6 @@ func SaveSettings(c *gin.Context) {
 		common.ErrorResp(c, err, 500)
 	} else {
 		common.SuccessResp(c)
-		static.UpdateIndex()
 	}
 }
 
