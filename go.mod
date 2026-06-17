@@ -46,7 +46,7 @@ require (
 	github.com/ipfs/go-ipfs-api v0.7.0
 	github.com/jlaffaye/ftp v0.2.1
 	github.com/json-iterator/go v1.1.12
-	github.com/kawai-network/fileprocessor v0.3.0
+	github.com/kawai-network/fileprocessor v0.4.0
 	github.com/kdomanski/iso9660 v0.4.0
 	github.com/larksuite/oapi-sdk-go/v3 v3.9.5
 	github.com/mark3labs/mcp-go v0.48.0
@@ -106,6 +106,7 @@ require (
 	github.com/emersion/go-message v0.18.0 // indirect
 	github.com/emersion/go-textwrapper v0.0.0-20200911093747-65d896831594 // indirect
 	github.com/emersion/go-vcard v0.0.0-20230815062825-8fda7d206ec9 // indirect
+	github.com/ethereum/go-ethereum v1.17.0 // indirect
 	github.com/fatedier/golib v0.5.1 // indirect
 	github.com/getkawai/tools v0.1.6 // indirect
 	github.com/go-jose/go-jose/v4 v4.1.4 // indirect
@@ -113,7 +114,8 @@ require (
 	github.com/google/jsonschema-go v0.4.2 // indirect
 	github.com/gorilla/mux v1.8.1 // indirect
 	github.com/hashicorp/yamux v0.1.1 // indirect
-	github.com/kawai-network/x v1.0.41 // indirect
+	github.com/holiman/uint256 v1.3.2 // indirect
+	github.com/kawai-network/x v1.0.47 // indirect
 	github.com/klauspost/reedsolomon v1.12.0 // indirect
 	github.com/mikelolasagasti/xz v1.0.1 // indirect
 	github.com/minio/minlz v1.0.1 // indirect

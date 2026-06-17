@@ -1,16 +1,10 @@
 package cmd
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
-	"fmt"
-	"io"
 	"log/slog"
-	"net/http"
 	"os"
 	"path/filepath"
-	"strconv"
 	"time"
 
 	"github.com/alist-org/alist/v3/internal/driver"
@@ -31,17 +25,21 @@ func InitFileprocBridge() {
 		slog.Warn("fileproc: pgxpool.New failed (disabled)", "err", err)
 		return
 	}
-	dim := embeddingDim()
+	dim := fp.DefaultEmbeddingDim
 	vec, err := fp.NewPgVectorStoreWithPool(context.Background(), pool, dim, "", nil)
 	if err != nil {
 		slog.Warn("fileproc: NewPgVectorStoreWithPool failed (disabled)", "err", err)
 		return
 	}
-	emb := fp.NewEmbeddingCache(&remoteEmbedder{
-		url:   getEnv("FILEPROC_EMBEDDING_URL", "https://openrouter.ai/api/v1/embeddings"),
-		key:   getEnv("FILEPROC_EMBEDDING_KEY", os.Getenv("OPENROUTER_API_KEY")),
-		model: getEnv("FILEPROC_EMBEDDING_MODEL", "text-embedding-3-small"),
-	}, nil)
+	emb := fp.NewEmbeddingCache(
+		fp.NewOpenAIEmbedder(
+			"https://openrouter.ai/api/v1/embeddings",
+			"",
+			"text-embedding-3-small",
+			dim,
+		),
+		nil,
+	)
 	op.RegisterFileUploadedHook(func(ctx context.Context, st driver.Driver, parent string, file alistModel.Obj) {
 		if file.IsDir() {
 			return
@@ -71,71 +69,4 @@ func InitFileprocBridge() {
 		}
 	})
 	slog.Info("fileproc: registered", "dim", dim)
-}
-
-func embeddingDim() int {
-	s := os.Getenv("FILEPROC_EMBEDDING_DIM")
-	if s == "" {
-		return 1024
-	}
-	n, err := strconv.Atoi(s)
-	if err != nil {
-		return 1024
-	}
-	return n
-}
-
-func getEnv(key, fallback string) string {
-	if v := os.Getenv(key); v != "" {
-		return v
-	}
-	return fallback
-}
-
-type remoteEmbedder struct{ url, key, model string }
-
-func (e *remoteEmbedder) Embed(ctx context.Context, texts []string) ([][]float32, error) {
-	if len(texts) == 0 {
-		return nil, nil
-	}
-	b, _ := json.Marshal(map[string]any{"input": texts, "model": e.model})
-	req, err := http.NewRequestWithContext(ctx, "POST", e.url, bytes.NewReader(b))
-	if err != nil {
-		return nil, fmt.Errorf("create req: %w", err)
-	}
-	req.Header.Set("Content-Type", "application/json")
-	if e.key != "" {
-		req.Header.Set("Authorization", "Bearer "+e.key)
-	}
-	r, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("http: %w", err)
-	}
-	defer r.Body.Close()
-	raw, _ := io.ReadAll(r.Body)
-	if r.StatusCode != 200 {
-		return nil, fmt.Errorf("api %s: HTTP %d: %s", e.url, r.StatusCode, string(raw))
-	}
-	var api struct {
-		Data []struct{ Embedding []float64 `json:"embedding"` } `json:"data"`
-	}
-	if err := json.Unmarshal(raw, &api); err != nil {
-		return nil, fmt.Errorf("decode: %w", err)
-	}
-	out := make([][]float32, len(api.Data))
-	for i, d := range api.Data {
-		v := make([]float32, len(d.Embedding))
-		for j, f := range d.Embedding {
-			v[j] = float32(f)
-		}
-		out[i] = v
-	}
-	return out, nil
-}
-
-func (e *remoteEmbedder) Dimension() int {
-	if d := embeddingDim(); d > 0 {
-		return d
-	}
-	return 1024
 }
