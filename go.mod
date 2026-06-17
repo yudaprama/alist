@@ -46,7 +46,7 @@ require (
 	github.com/ipfs/go-ipfs-api v0.7.0
 	github.com/jlaffaye/ftp v0.2.1
 	github.com/json-iterator/go v1.1.12
-	github.com/kawai-network/fileprocessor v0.4.0
+	github.com/kawai-network/fileprocessor v0.4.1
 	github.com/kdomanski/iso9660 v0.4.0
 	github.com/larksuite/oapi-sdk-go/v3 v3.9.5
 	github.com/mark3labs/mcp-go v0.48.0
