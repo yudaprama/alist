@@ -1,6 +1,7 @@
 package op
 
 import (
+	"context"
 	"regexp"
 	"strconv"
 	"strings"
@@ -27,6 +28,23 @@ func RegisterObjsUpdateHook(hook ObjsUpdateHook) {
 func HandleObjsUpdateHook(parent string, objs []model.Obj) {
 	for _, hook := range objsUpdateHooks {
 		hook(parent, objs)
+	}
+}
+
+// FileUploadedHook fires after a successful upload to any storage.
+// It runs in its own goroutine; implementations must be safe for concurrent
+// use and should not block indefinitely.
+type FileUploadedHook func(ctx context.Context, storage driver.Driver, parentDir string, file model.Obj)
+
+var uploadHooks = make([]FileUploadedHook, 0)
+
+func RegisterFileUploadedHook(hook FileUploadedHook) {
+	uploadHooks = append(uploadHooks, hook)
+}
+
+func HandleFileUploadedHook(ctx context.Context, storage driver.Driver, parentDir string, file model.Obj) {
+	for _, hook := range uploadHooks {
+		go hook(ctx, storage, parentDir, file)
 	}
 }
 
