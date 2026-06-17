@@ -26,9 +26,9 @@ func InitFileprocBridge() {
 		return
 	}
 	dim := fp.DefaultEmbeddingDim
-	vec, err := fp.NewPgVectorStoreWithPool(context.Background(), pool, dim, "", nil)
+	vec, err := fp.NewPublicEmbeddingsStoreWithPool(context.Background(), pool, nil)
 	if err != nil {
-		slog.Warn("fileproc: NewPgVectorStoreWithPool failed (disabled)", "err", err)
+		slog.Warn("fileproc: NewPublicEmbeddingsStoreWithPool failed (disabled)", "err", err)
 		return
 	}
 	emb := fp.NewEmbeddingCache(
