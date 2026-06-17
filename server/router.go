@@ -10,7 +10,6 @@ import (
 	"github.com/alist-org/alist/v3/server/common"
 	"github.com/alist-org/alist/v3/server/handles"
 	"github.com/alist-org/alist/v3/server/middlewares"
-	"github.com/alist-org/alist/v3/server/static"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
@@ -47,8 +46,6 @@ func Init(e *gin.Engine) {
 	g.GET("/p/*path", signCheck, downloadLimiter, handles.Proxy)
 	g.HEAD("/d/*path", signCheck, handles.Down)
 	g.HEAD("/p/*path", signCheck, handles.Proxy)
-	g.GET("/s/:share_id", handles.GetSharePage)
-	g.GET("/s/:share_id/*path", handles.GetSharePage)
 	g.GET("/sd/:share_id", downloadLimiter, handles.ShareDown)
 	g.GET("/sd/:share_id/*path", downloadLimiter, handles.ShareDown)
 	g.HEAD("/sd/:share_id", handles.ShareDown)
@@ -122,8 +119,8 @@ func Init(e *gin.Engine) {
 	if flags.Debug || flags.Dev {
 		debug(g.Group("/debug"))
 	}
-	static.Static(g, func(handlers ...gin.HandlerFunc) {
-		e.NoRoute(handlers...)
+	e.NoRoute(func(c *gin.Context) {
+		c.AbortWithStatusJSON(404, gin.H{"message": "not found"})
 	})
 }
 
