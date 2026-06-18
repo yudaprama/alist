@@ -47,11 +47,16 @@ jobs:
           # netrc in HOME (macOS/host builds)
           echo "machine github.com login dielzzz89 password ${DEP_TOKEN}" >> ~/.netrc
           chmod 600 ~/.netrc
-          # netrc in workspace (container builds)
-          echo "machine github.com login dielzzz89 password ${DEP_TOKEN}" >> ${GITHUB_WORKSPACE}/.netrc
-          chmod 600 ${GITHUB_WORKSPACE}/.netrc
+          # GIT_ASKPASS script written to workspace (container builds)
+          cat > ${GITHUB_WORKSPACE}/git-askpass.sh << GITEOF
+          #!/bin/sh
+          echo "${DEP_TOKEN}"
+          GITEOF
+          chmod +x ${GITHUB_WORKSPACE}/git-askpass.sh
           go env -w GOPRIVATE=github.com/kawai-network/*
           go env -w GONOSUMDB=github.com/kawai-network/*
+
+      - name: Determine version
 
       - name: Determine version
         id: ver
@@ -67,6 +72,9 @@ jobs:
       - name: Build (Linux, musl)
         if: matrix.musl
         uses: go-cross/cgo-actions@v1
+        env:
+          GIT_ASKPASS: ${{ github.workspace }}/git-askpass.sh
+          GIT_TERMINAL_PROMPT: "0"
         with:
           targets: ${{ matrix.target }}
           musl-target-format: $os-$musl-$arch
