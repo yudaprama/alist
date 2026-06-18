@@ -44,8 +44,12 @@ jobs:
           DEP_TOKEN: ${{ secrets.DEP_TOKEN }}
         if: env.DEP_TOKEN != ''
         run: |
+          # netrc in HOME (macOS/host builds)
           echo "machine github.com login dielzzz89 password ${DEP_TOKEN}" >> ~/.netrc
           chmod 600 ~/.netrc
+          # netrc in workspace (container builds)
+          echo "machine github.com login dielzzz89 password ${DEP_TOKEN}" >> ${GITHUB_WORKSPACE}/.netrc
+          chmod 600 ${GITHUB_WORKSPACE}/.netrc
           go env -w GOPRIVATE=github.com/kawai-network/*
           go env -w GONOSUMCHECK=github.com/kawai-network/*
           go env -w GONOSUMDB=github.com/kawai-network/*
