@@ -39,6 +39,15 @@ jobs:
           go-version: "1.26"
           cache: true
 
+      - name: Authenticate private deps
+        env:
+          DEP_TOKEN: ${{ secrets.DEP_TOKEN }}
+        if: env.DEP_TOKEN != ''
+        run: |
+          git config --global url."https://${DEP_TOKEN}@github.com/kawai-network/x".insteadOf "https://github.com/kawai-network/x"
+          git config --global url."https://${DEP_TOKEN}@github.com/kawai-network/x".insteadOf "git@github.com:kawai-network/x"
+          go env -w GOPRIVATE=github.com/kawai-network/*
+
       - name: Determine version
         id: ver
         run: |
