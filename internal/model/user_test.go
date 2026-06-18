@@ -33,9 +33,21 @@ func TestJoinPath_BasePathContainment(t *testing.T) {
 			want:    "/abc123-id/sub/file.txt",
 		},
 		{
-			name:    "kratos user path without leading slash (normalized) treated as absolute and denied",
+			name:    "kratos user relative (no leading slash) resolves under BasePath",
 			user:    &User{BasePath: "/abc123-id", Permission: 0},
 			reqPath: "my-folder",
+			want:    "/abc123-id/my-folder",
+		},
+		{
+			name:    "kratos user relative nested resolves under BasePath",
+			user:    &User{BasePath: "/abc123-id", Permission: 0},
+			reqPath: "sub/child/file.txt",
+			want:    "/abc123-id/sub/child/file.txt",
+		},
+		{
+			name:    "kratos user absolute path at storage root denied (outside BasePath)",
+			user:    &User{BasePath: "/abc123-id", Permission: 0},
+			reqPath: "/my-folder",
 			wantErr: errs.PermissionDenied,
 		},
 		{

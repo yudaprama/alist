@@ -89,13 +89,16 @@ func JoinBasePath(basePath, reqPath string) (string, error) {
 		return "", errs.RelativePath
 	}
 
-	reqPath = FixAndCleanPath(reqPath)
-
-	if strings.HasPrefix(reqPath, "/") {
-		return reqPath, nil
+	// Truly relative path (no leading slash): resolve under basePath.
+	// FixAndCleanPath auto-prepends "/" so we must inspect the raw input
+	// first; otherwise the branch below would treat every request as
+	// absolute and bypass the user-scoped basePath prefix.
+	if !strings.HasPrefix(reqPath, "/") {
+		normalized := strings.ReplaceAll(reqPath, "\\", "/")
+		return stdpath.Join(FixAndCleanPath(basePath), normalized), nil
 	}
 
-	return stdpath.Join(FixAndCleanPath(basePath), FixAndCleanPath(reqPath)), nil
+	return FixAndCleanPath(reqPath), nil
 }
 
 func GetFullPath(mountPath, path string) string {
