@@ -44,8 +44,8 @@ jobs:
           DEP_TOKEN: ${{ secrets.DEP_TOKEN }}
         if: env.DEP_TOKEN != ''
         run: |
-          git config --global url."https://${DEP_TOKEN}@github.com/kawai-network/x".insteadOf "https://github.com/kawai-network/x"
-          git config --global url."https://${DEP_TOKEN}@github.com/kawai-network/x".insteadOf "git@github.com:kawai-network/x"
+          git config --global url."https://x-access-token:${DEP_TOKEN}@github.com/".insteadOf "https://github.com/"
+          git config --global url."https://x-access-token:${DEP_TOKEN}@github.com/".insteadOf "git@github.com:"
           go env -w GOPRIVATE=github.com/kawai-network/*
 
       - name: Determine version
