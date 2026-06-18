@@ -67,22 +67,25 @@ jobs:
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "Version: $VERSION"
 
-      - name: Build (Linux, musl)
-        if: matrix.musl
-        uses: go-cross/cgo-actions@v1
-        env:
-          GIT_ASKPASS: ${{ github.workspace }}/git-askpass.sh
-          GIT_TERMINAL_PROMPT: "0"
-        with:
-          targets: ${{ matrix.target }}
-          musl-target-format: $os-$musl-$arch
-          out-dir: build
-          x-flags: |
-            github.com/alist-org/alist/v3/internal/conf.BuiltAt=$built_at
-            github.com/alist-org/alist/v3/internal/conf.GitAuthor=Xhofe
-            github.com/alist-org/alist/v3/internal/conf.GitCommit=$git_commit
-            github.com/alist-org/alist/v3/internal/conf.Version=$tag
-            github.com/alist-org/alist/v3/internal/conf.WebVersion=none
+      - name: Build (Linux)
+        if: matrix.runner == 'ubuntu-latest'
+        run: |
+          os=$(echo ${{ matrix.target }} | cut -d'-' -f1)
+          arch=$(echo ${{ matrix.target }} | cut -d'-' -f2)
+          built_at="$(date +'%F %T %z')"
+          git_author="Xhofe <i@nn.ci>"
+          git_commit=$(git log --pretty=format:"%h" -1)
+          version=${{ steps.ver.outputs.version }}
+          web_version="none"
+
+          mkdir -p build
+          CGO_ENABLED=0 GOOS=$os GOARCH=$arch go build -o build/alist-$os-$arch \
+            -ldflags "-w -s \
+              -X 'github.com/alist-org/alist/v3/internal/conf.BuiltAt=$built_at' \
+              -X 'github.com/alist-org/alist/v3/internal/conf.GitAuthor=$git_author' \
+              -X 'github.com/alist-org/alist/v3/internal/conf.GitCommit=$git_commit' \
+              -X 'github.com/alist-org/alist/v3/internal/conf.Version=$version' \
+              -X 'github.com/alist-org/alist/v3/internal/conf.WebVersion=$web_version'" .
 
       - name: Build (macOS, cgo)
         if: matrix.runner == 'macos-latest'
