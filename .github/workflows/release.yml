@@ -57,8 +57,6 @@ jobs:
           go env -w GONOSUMDB=github.com/kawai-network/*
 
       - name: Determine version
-
-      - name: Determine version
         id: ver
         run: |
           if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
