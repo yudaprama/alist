@@ -163,10 +163,21 @@ func (u *User) JoinPath(reqPath string) (string, error) {
 		return "", err
 	}
 
-	if path != "/" && u.CheckPathLimit() {
-		basePaths := GetAllBasePathsFromRoles(u)
+	// Enforce BasePath containment for any non-root user. Without this,
+	// a user with BasePath "/<id>" could bypass their sandbox by sending
+	// an absolute path (JoinBasePath passes absolute paths through
+	// unchanged), reading or mutating another user's folder.
+	//
+	// Admin has BasePath="/" which matches every path, so this check is
+	// a no-op for admins. Users with role-granted permission scopes keep
+	// the extra access when CheckPathLimit() is enabled.
+	if path != "/" && u.BasePath != "/" {
+		allowed := []string{u.BasePath}
+		if u.CheckPathLimit() {
+			allowed = append(allowed, GetAllBasePathsFromRoles(u)...)
+		}
 		match := false
-		for _, base := range basePaths {
+		for _, base := range allowed {
 			if utils.IsSubPath(base, path) {
 				match = true
 				break
