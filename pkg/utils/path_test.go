@@ -1,6 +1,10 @@
 package utils
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/alist-org/alist/v3/internal/errs"
+)
 
 func TestEncodePath(t *testing.T) {
 	t.Log(EncodePath("http://localhost:5244/d/123#.png"))
@@ -68,34 +72,79 @@ func TestJoinUnderBase(t *testing.T) {
 }
 
 func TestJoinBasePath(t *testing.T) {
-	// A user's base path confines every request path, not just "/".
-	datas := []struct {
+	tests := []struct {
+		name     string
 		basePath string
 		reqPath  string
 		want     string
+		wantErr  error
 	}{
-		{"/public", "/", "/public"},
-		{"/public", "/sub", "/public/sub"},
-		{"/public", "sub", "/public/sub"},
-		{"/public", "/sub/file.txt", "/public/sub/file.txt"},
-		{"/public", "/other_storage", "/public/other_storage"},
-		{"/", "/sub", "/sub"},
-		{"", "/sub", "/sub"},
-	}
-	for _, d := range datas {
-		got, err := JoinBasePath(d.basePath, d.reqPath)
-		if err != nil {
-			t.Fatalf("JoinBasePath(%q, %q) error: %v", d.basePath, d.reqPath, err)
-		}
-		if got != d.want {
-			t.Errorf("JoinBasePath(%q, %q) = %q, want %q", d.basePath, d.reqPath, got, d.want)
-		}
+		{
+			name:     "truly relative single segment resolves under basePath",
+			basePath: "/abc123-id",
+			reqPath:  "my-folder",
+			want:     "/abc123-id/my-folder",
+		},
+		{
+			name:     "truly relative nested resolves under basePath",
+			basePath: "/abc123-id",
+			reqPath:  "sub/child/file.txt",
+			want:     "/abc123-id/sub/child/file.txt",
+		},
+		{
+			name:     "absolute path inside basePath passes through",
+			basePath: "/abc123-id",
+			reqPath:  "/abc123-id/file.txt",
+			want:     "/abc123-id/file.txt",
+		},
+		{
+			name:     "absolute path outside basePath passes through (containment enforced by caller)",
+			basePath: "/abc123-id",
+			reqPath:  "/xyz/file.txt",
+			want:     "/xyz/file.txt",
+		},
+		{
+			name:     "root absolute path passes through",
+			basePath: "/abc123-id",
+			reqPath:  "/",
+			want:     "/",
+		},
+		{
+			name:     "relative traversal rejected",
+			basePath: "/abc123-id",
+			reqPath:  "../etc/passwd",
+			wantErr:  errs.RelativePath,
+		},
+		{
+			name:     "mid-path traversal rejected",
+			basePath: "/abc123-id",
+			reqPath:  "/a/b/../c",
+			wantErr:  errs.RelativePath,
+		},
+		{
+			name:     "admin basePath with absolute path",
+			basePath: "/",
+			reqPath:  "/any/path",
+			want:     "/any/path",
+		},
+		{
+			name:     "relative path with backslash normalized",
+			basePath: "/abc123-id",
+			reqPath:  `my\folder`,
+			want:     "/abc123-id/my/folder",
+		},
 	}
 
-	// relative segments must still be rejected
-	for _, reqPath := range []string{"..", "../x", "/x/..", "/x/../y"} {
-		if _, err := JoinBasePath("/public", reqPath); err == nil {
-			t.Errorf("JoinBasePath(%q, %q) expected error, got nil", "/public", reqPath)
-		}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := JoinBasePath(tt.basePath, tt.reqPath)
+			if tt.wantErr != nil {
+				if err == nil {
+					t.Fatalf("expected error %v, got nil (path=%q)", tt.wantErr, got)
+				}
+				if err != tt.wantErr {
+					t.Fatalf("expected error %v, got %v", tt.wantErr, err)
+				}
+				return
 	}
 }
