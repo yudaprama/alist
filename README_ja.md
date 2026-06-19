@@ -1,6 +1,6 @@
 <div align="center">
   <a href="https://alistgo.com"><img width="100px" alt="logo" src="https://cdn.jsdelivr.net/gh/alist-org/logo@main/logo.svg"/></a>
-  <p><em>🗂️Gin と Solidjs による、複数のストレージをサポートするファイルリストプログラム。</em></p>
+  <p><em>🗂️Gin による、複数のストレージをサポートするファイルリストプログラム — API-only モード。</em></p>
 <div>
   <a href="https://goreportcard.com/report/github.com/alist-org/alist/v3">
     <img src="https://goreportcard.com/badge/github.com/alist-org/alist/v3" alt="latest version" />
@@ -80,23 +80,12 @@
     - [x] [FeijiPan](https://www.feijipan.com/)
     - [x] [dogecloud](https://www.dogecloud.com/product/oss)
 - [x] デプロイが簡単で、すぐに使える
-- [x] ファイルプレビュー (PDF, マークダウン, コード, プレーンテキスト, ...)
-- [x] ギャラリーモードでの画像プレビュー
-- [x] ビデオとオーディオのプレビュー、歌詞と字幕のサポート
-- [x] Office ドキュメントのプレビュー (docx, pptx, xlsx, ...)
-- [x] `README.md` のプレビューレンダリング
-- [x] ファイルのパーマリンクコピーと直接ダウンロード
-- [x] ダークモード
-- [x] 国際化
-- [x] 保護されたルート (パスワード保護と認証)
 - [x] WebDav (詳細は https://alistgo.com/guide/webdav.html を参照)
 - [x] [Docker デプロイ](https://hub.docker.com/r/xhofe/alist)
 - [x] Cloudflare ワーカープロキシ
-- [x] ファイル/フォルダパッケージのダウンロード
-- [x] ウェブアップロード(訪問者にアップロードを許可できる), 削除, mkdir, 名前変更, 移動, コピー
-- [x] オフラインダウンロード
 - [x] 二つのストレージ間でファイルをコピー
 - [x] シングルスレッドのダウンロード/ストリーム向けのマルチスレッド ダウンロード アクセラレーション
+- [x] REST API のみ — フロントエンドはサードパーティクライアント（OpenList、alist-web フォークなど）が提供します。API 以外のルートは JSON `404` を返します。
 
 ## ドキュメント
 
@@ -108,7 +97,7 @@
 
 ## デモ
 
-<https://al.nn.ci>
+パブリックデモ（`https://al.nn.ci`）は組み込み Web UI とともに廃止されました。Docker（`xhofe/alist`）またはソースからビルドしてインスタンスを起動し、互換性のあるクライアントから接続してください。
 
 ## ディスカッション
 
@@ -127,7 +116,7 @@ https://alistgo.com/guide/sponsor.html
 
 これらの素晴らしい人々に感謝します:
 
-[![Contributors](http://contrib.nn.ci/api?repo=alist-org/alist&repo=alist-org/alist-web&repo=alist-org/docs)](https://github.com/alist-org/alist/graphs/contributors)
+[![Contributors](http://contrib.nn.ci/api?repo=alist-org/alist&repo=alist-org/docs)](https://github.com/alist-org/alist/graphs/contributors)
 
 ## ライセンス
 
