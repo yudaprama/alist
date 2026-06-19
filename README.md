@@ -1,6 +1,6 @@
 <div align="center">
   <a href="https://alistgo.com"><img width="100px" alt="logo" src="https://cdn.jsdelivr.net/gh/alist-org/logo@main/logo.svg"/></a>
-  <p><em>🗂️A file list program that supports multiple storages, powered by Gin and Solidjs.</em></p>
+  <p><em>🗂️A file list program that supports multiple storages — API-only mode, powered by Gin.</em></p>
 <div>
   <a href="https://goreportcard.com/report/github.com/alist-org/alist/v3">
     <img src="https://goreportcard.com/badge/github.com/alist-org/alist/v3" alt="latest version" />
@@ -81,23 +81,12 @@ English | [中文](./README_cn.md) | [日本語](./README_ja.md) | [Contributing
     - [x] [dogecloud](https://www.dogecloud.com/product/oss)
     - [x] [Azure Blob Storage](https://azure.microsoft.com/products/storage/blobs)
 - [x] Easy to deploy and out-of-the-box
-- [x] File preview (PDF, markdown, code, plain text, ...)
-- [x] Image preview in gallery mode
-- [x] Video and audio preview, support lyrics and subtitles
-- [x] Office documents preview (docx, pptx, xlsx, ...)
-- [x] `README.md` preview rendering
-- [x] File permalink copy and direct file download
-- [x] Dark mode
-- [x] I18n
-- [x] Protected routes (password protection and authentication)
 - [x] WebDav (see https://alistgo.com/guide/webdav.html for details)
 - [x] [Docker Deploy](https://hub.docker.com/r/xhofe/alist)
 - [x] Cloudflare Workers proxy
-- [x] File/Folder package download
-- [x] Web upload(Can allow visitors to upload), delete, mkdir, rename, move and copy
-- [x] Offline download
 - [x] Copy files between two storage
 - [x] Multi-thread downloading acceleration for single-thread download/stream
+- [x] REST API only — frontend is provided by third-party clients (e.g. OpenList, alist-web forks). Non-API routes return JSON `404`.
 
 ## Document
 
@@ -109,7 +98,7 @@ English | [中文](./README_cn.md) | [日本語](./README_ja.md) | [Contributing
 
 ## Demo
 
-<https://al.nn.ci>
+The public demo (`https://al.nn.ci`) was retired together with the embedded web UI. Spin up your own instance with Docker (`xhofe/alist`) or build from source, then point any compatible client at it.
 
 ## Discussion
 
@@ -128,7 +117,7 @@ https://alistgo.com/guide/sponsor.html
 
 Thanks goes to these wonderful people:
 
-[![Contributors](http://contrib.nn.ci/api?repo=alist-org/alist&repo=alist-org/alist-web&repo=alist-org/docs)](https://github.com/alist-org/alist/graphs/contributors)
+[![Contributors](http://contrib.nn.ci/api?repo=alist-org/alist&repo=alist-org/docs)](https://github.com/alist-org/alist/graphs/contributors)
 
 ## License
 
