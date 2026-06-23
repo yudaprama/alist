@@ -130,7 +130,7 @@ func DefaultConfig() *Config {
 	dbPath := filepath.Join(flags.DataDir, "data.db")
 	return &Config{
 		Scheme: Scheme{
-			Address:    "0.0.0.0",
+			Address:    "127.0.0.1",
 			UnixFile:   "",
 			HttpPort:   5244,
 			HttpsPort:  -1,
