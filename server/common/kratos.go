@@ -2,164 +2,15 @@ package common
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
-	"net/http"
-	"sync"
-	"time"
 
-	"github.com/Xhofe/go-cache"
 	"github.com/alist-org/alist/v3/internal/conf"
 	"github.com/alist-org/alist/v3/internal/model"
 	"github.com/alist-org/alist/v3/internal/op"
 	"github.com/alist-org/alist/v3/internal/setting"
 	"github.com/alist-org/alist/v3/pkg/utils/random"
-	kratos "github.com/ory/kratos-client-go/v26"
 	"gorm.io/gorm"
 )
-
-type KratosIdentity = kratos.Identity
-type KratosSession = kratos.Session
-
-// Validator is the minimal surface needed to verify a Kratos session.
-// Exists so the validator can be swapped in tests.
-type KratosValidator interface {
-	ValidateSession(ctx context.Context, sessionToken string) (*KratosSession, error)
-}
-
-type kratosValidator struct {
-	client  *kratos.APIClient
-	timeout time.Duration
-}
-
-func (v *kratosValidator) ValidateSession(ctx context.Context, sessionToken string) (*KratosSession, error) {
-	if sessionToken == "" {
-		return nil, errors.New("empty kratos session token")
-	}
-	callCtx, cancel := context.WithTimeout(ctx, v.timeout)
-	defer cancel()
-
-	session, _, err := v.client.FrontendAPI.
-		ToSession(callCtx).
-		XSessionToken(sessionToken).
-		Execute()
-	if err != nil {
-		return nil, err
-	}
-	if session == nil {
-		return nil, errors.New("kratos returned nil session")
-	}
-	if session.Active != nil && !*session.Active {
-		return nil, errors.New("kratos session is not active")
-	}
-	if session.Identity == nil || session.Identity.GetId() == "" {
-		return nil, errors.New("kratos session has no identity")
-	}
-	return session, nil
-}
-
-var (
-	validatorMu      sync.RWMutex
-	validatorCache   = map[string]KratosValidator{}
-	validatorFactory = newKratosValidator
-)
-
-func newKratosValidator(cfg kratosValidatorConfig) KratosValidator {
-	c := kratos.NewConfiguration()
-	c.Servers = kratos.ServerConfigurations{{URL: cfg.BrowserURL}}
-	timeout := time.Duration(cfg.RequestTimeout) * time.Second
-	if timeout <= 0 {
-		timeout = 5 * time.Second
-	}
-	c.HTTPClient = &http.Client{Timeout: timeout}
-	return &kratosValidator{
-		client:  kratos.NewAPIClient(c),
-		timeout: timeout,
-	}
-}
-
-type kratosValidatorConfig struct {
-	BrowserURL     string
-	RequestTimeout int
-}
-
-func resolveKratosConfig() kratosValidatorConfig {
-	return kratosValidatorConfig{
-		BrowserURL:     setting.GetStr(conf.KratosPublicUrl),
-		RequestTimeout: 5,
-	}
-}
-
-func getKratosValidator() (KratosValidator, error) {
-	if !setting.GetBool(conf.KratosEnabled) {
-		return nil, errors.New("kratos auth is not enabled")
-	}
-	cfg := resolveKratosConfig()
-	if cfg.BrowserURL == "" {
-		return nil, errors.New("kratos public url is not configured")
-	}
-
-	validatorMu.RLock()
-	if v, ok := validatorCache[cfg.BrowserURL]; ok {
-		validatorMu.RUnlock()
-		return v, nil
-	}
-	validatorMu.RUnlock()
-
-	validatorMu.Lock()
-	defer validatorMu.Unlock()
-	if v, ok := validatorCache[cfg.BrowserURL]; ok {
-		return v, nil
-	}
-	v := validatorFactory(cfg)
-	validatorCache[cfg.BrowserURL] = v
-	return v, nil
-}
-
-var kratosSessionCache = cache.NewMemCache[string](cache.WithShards[string](16))
-
-// ValidateKratosSession validates a Kratos session token via the
-// official Kratos SDK (FrontendAPI.ToSession).
-func ValidateKratosSession(token string) (*KratosSession, error) {
-	if token == "" {
-		return nil, errors.New("empty kratos token")
-	}
-
-	if cached, ok := kratosSessionCache.Get(token); ok {
-		var session KratosSession
-		if err := json.Unmarshal([]byte(cached), &session); err == nil {
-			if session.Active != nil && !*session.Active {
-				return nil, errors.New("kratos session is not active")
-			}
-			return &session, nil
-		}
-	}
-
-	v, err := getKratosValidator()
-	if err != nil {
-		return nil, err
-	}
-
-	session, err := v.ValidateSession(context.Background(), token)
-	if err != nil {
-		return nil, err
-	}
-
-	if buf, err := json.Marshal(session); err == nil {
-		kratosSessionCache.Set(token, string(buf), cache.WithEx[string](time.Minute))
-	}
-
-	return session, nil
-}
-
-// InvalidateKratosSession removes a cached session so the next request
-// hits Kratos directly (used on logout).
-func InvalidateKratosSession(token string) {
-	if token == "" {
-		return
-	}
-	kratosSessionCache.Del(token)
-}
 
 func traitToString(traits map[string]interface{}, keys ...string) string {
 	for _, k := range keys {
@@ -175,12 +26,12 @@ func traitToString(traits map[string]interface{}, keys ...string) string {
 // GetOrCreateKratosUser finds the AList user bound to a Kratos identity,
 // or creates one if auto-register is enabled. The user is isolated under
 // /<identity_id> so they can only access their own files.
-func GetOrCreateKratosUser(session *KratosSession) (*model.User, error) {
-	if session == nil || session.Identity == nil || session.Identity.GetId() == "" {
-		return nil, errors.New("invalid kratos session")
+func GetOrCreateKratosUser(identityID string, traits map[string]interface{}) (*model.User, error) {
+	if identityID == "" {
+		return nil, errors.New("invalid kratos identity")
 	}
 
-	ssoID := "kratos:" + session.Identity.GetId()
+	ssoID := "kratos:" + identityID
 
 	user, err := op.GetUserBySsoID(ssoID)
 	if err == nil {
@@ -194,19 +45,14 @@ func GetOrCreateKratosUser(session *KratosSession) (*model.User, error) {
 		return nil, gorm.ErrRecordNotFound
 	}
 
-	traitsRaw := session.Identity.GetTraits()
-	var traitsMap map[string]interface{}
-	if t, ok := traitsRaw.(map[string]interface{}); ok {
-		traitsMap = t
-	}
-	username := traitToString(traitsMap, "username", "email", "name")
+	username := traitToString(traits, "username", "email", "name")
 	if username == "" {
-		username = session.Identity.GetId()
+		username = identityID
 	}
 
 	basePath := setting.GetStr(conf.KratosDefaultDir)
 	if basePath == "" || basePath == "/" {
-		basePath = "/" + session.Identity.GetId()
+		basePath = "/" + identityID
 	}
 
 	defaultRole := int(setting.GetInt(conf.KratosDefaultRole, 2))
@@ -235,7 +81,7 @@ func GetOrCreateKratosUser(session *KratosSession) (*model.User, error) {
 	// Auto-provision per-user folders across all mounted storages
 	// (Local, GoogleDrive, S3, etc.). Each provisioner runs async and
 	// is best-effort — failures must not block user creation.
-	ProvisionUserFolders(context.Background(), session.Identity.GetId())
+	ProvisionUserFolders(context.Background(), identityID)
 
 	return user, nil
 }

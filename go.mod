@@ -56,7 +56,6 @@ require (
 	github.com/minio/sio v0.4.0
 	github.com/natefinch/lumberjack v2.0.0+incompatible
 	github.com/ncw/swift/v2 v2.0.5
-	github.com/ory/kratos-client-go/v26 v26.2.0
 	github.com/pkg/errors v0.9.1
 	github.com/pkg/sftp v1.13.10
 	github.com/pquerna/otp v1.5.0

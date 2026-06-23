@@ -4,7 +4,6 @@ import (
 	"crypto/subtle"
 	"errors"
 	"fmt"
-	"strings"
 
 	"github.com/alist-org/alist/v3/internal/conf"
 	"github.com/alist-org/alist/v3/internal/device"
@@ -18,26 +17,55 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-const kratosTokenPrefix = "kratos:"
-
-func stripKratosPrefix(token string) (string, bool) {
-	if !strings.HasPrefix(token, kratosTokenPrefix) {
-		return "", false
-	}
-	inner := token[len(kratosTokenPrefix):]
-	if inner == "" {
-		return "", false
-	}
-	return inner, true
-}
-
 // Auth is a middleware that checks if the user is logged in.
 // Token formats accepted:
+//   - Oathkeeper-injected Kratos identity headers
 //   - admin token (env-token)
 //   - AList JWT (signed with conf.JwtSecret)
-//   - Kratos session token (prefixed with "kratos:" — e.g. "kratos:<session_token>")
+//
 // if token is empty, set user to guest
 func Auth(c *gin.Context) {
+	if identityID := c.GetHeader("X-User-Id"); identityID != "" {
+		traits := map[string]interface{}{}
+		if email := headerTrait(c, "X-User-Traits-Email"); email != "" {
+			traits["email"] = email
+		}
+		if name := headerTrait(c, "X-User-Traits-Name"); name != "" {
+			traits["name"] = name
+		}
+		if username := headerTrait(c, "X-User-Traits-Username"); username != "" {
+			traits["username"] = username
+		}
+
+		kratosUser, err := common.GetOrCreateKratosUser(identityID, traits)
+		if err != nil {
+			log.Debugf("kratos header user lookup/create failed: %v", err)
+			common.ErrorStrResp(c, "Kratos user is not registered", 401)
+			c.Abort()
+			return
+		}
+		if kratosUser.Disabled {
+			common.ErrorStrResp(c, "Current user is disabled, replace please", 401)
+			c.Abort()
+			return
+		}
+		if len(kratosUser.Role) > 0 {
+			roles, err := op.GetRolesByUserID(kratosUser.ID)
+			if err != nil {
+				common.ErrorStrResp(c, fmt.Sprintf("Fail to load kratos user roles: %v", err), 500)
+				c.Abort()
+				return
+			}
+			kratosUser.RolesDetail = roles
+		}
+		if !HandleSession(c, kratosUser) {
+			return
+		}
+		log.Debugf("use oathkeeper kratos identity: %+v", kratosUser)
+		c.Next()
+		return
+	}
+
 	token := c.GetHeader("Authorization")
 	if subtle.ConstantTimeCompare([]byte(token), []byte(setting.GetStr(conf.Token))) == 1 {
 		admin, err := op.GetAdmin()
@@ -82,45 +110,6 @@ func Auth(c *gin.Context) {
 		return
 	}
 
-	// Kratos session token: "kratos:<session_token>".
-	// Validated against the Kratos /sessions/whoami endpoint.
-	if kratosToken, ok := stripKratosPrefix(token); ok {
-		kratosSession, err := common.ValidateKratosSession(kratosToken)
-		if err != nil {
-			log.Debugf("kratos session validation failed: %v", err)
-			common.ErrorStrResp(c, "Invalid Kratos session", 401)
-			c.Abort()
-			return
-		}
-		kratosUser, err := common.GetOrCreateKratosUser(kratosSession)
-		if err != nil {
-			log.Debugf("kratos user lookup/create failed: %v", err)
-			common.ErrorStrResp(c, "Kratos user is not registered", 401)
-			c.Abort()
-			return
-		}
-		if kratosUser.Disabled {
-			common.ErrorStrResp(c, "Current user is disabled, replace please", 401)
-			c.Abort()
-			return
-		}
-		if len(kratosUser.Role) > 0 {
-			roles, err := op.GetRolesByUserID(kratosUser.ID)
-			if err != nil {
-				common.ErrorStrResp(c, fmt.Sprintf("Fail to load kratos user roles: %v", err), 500)
-				c.Abort()
-				return
-			}
-			kratosUser.RolesDetail = roles
-		}
-		if !HandleSession(c, kratosUser) {
-			return
-		}
-		log.Debugf("use kratos session: %+v", kratosUser)
-		c.Next()
-		return
-	}
-
 	userClaims, err := common.ParseToken(token)
 	if err != nil {
 		common.ErrorResp(c, err, 401)
@@ -158,6 +147,14 @@ func Auth(c *gin.Context) {
 	}
 	log.Debugf("use login token: %+v", user)
 	c.Next()
+}
+
+func headerTrait(c *gin.Context, key string) string {
+	value := c.GetHeader(key)
+	if value == "<no value>" {
+		return ""
+	}
+	return value
 }
 
 // HandleSession verifies device sessions and stores context values.

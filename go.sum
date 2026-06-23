@@ -539,8 +539,6 @@ github.com/nwaples/rardecode/v2 v2.2.0 h1:4ufPGHiNe1rYJxYfehALLjup4Ls3ck42CWwjKi
 github.com/nwaples/rardecode/v2 v2.2.0/go.mod h1:7uz379lSxPe6j9nvzxUZ+n7mnJNgjsRNb6IbvGVHRmw=
 github.com/okatu-loli/115driver v1.2.3-1 h1:UoBEREqh6RD6WlxiJ2Z29JxNZ/UcoChvdHn9r9Tx7nI=
 github.com/okatu-loli/115driver v1.2.3-1/go.mod h1:Zk7Qz7SYO1QU0SJIne6DnUD2k36S3wx/KbsQpxcfY/Y=
-github.com/ory/kratos-client-go/v26 v26.2.0 h1:G0NipZsXW/6zTexXHqmtTtOf7QC/FcbAQBB1jendqxs=
-github.com/ory/kratos-client-go/v26 v26.2.0/go.mod h1:e+/mcu50WOlMneiR00+uD05b0mW5t2H4hF1o4ph6MYk=
 github.com/otiai10/copy v1.14.0 h1:dCI/t1iTdYGtkvCuBG2BgR6KZa83PTclw4U5n2wAllU=
 github.com/otiai10/copy v1.14.0/go.mod h1:ECfuL02W+/FkTWZWgQqXPWZgW9oeKCSQ5qVfSc4qc4w=
 github.com/otiai10/mint v1.5.1 h1:XaPLeE+9vGbuyEHem1JNk3bYc7KKqyI/na0/mLd/Kks=
