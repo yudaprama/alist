@@ -61,6 +61,11 @@ func Auth(c *gin.Context) {
 		if !HandleSession(c, kratosUser) {
 			return
 		}
+		// Expose the Kratos identity id to downstream handlers + hooks. The
+		// fileprocessor RAG bridge reads ctx.Value("kratos_identity_id") to scope
+		// ingest per user; gin's Context.Value resolves string keys set via
+		// c.Set, and fs.PutDirectly threads this context into the upload hook.
+		c.Set("kratos_identity_id", identityID)
 		log.Debugf("use oathkeeper kratos identity: %+v", kratosUser)
 		c.Next()
 		return
