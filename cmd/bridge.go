@@ -54,6 +54,29 @@ func InitFileprocBridge() {
 		fp.NewOpenAIEmbedder(embedURL, embedKey, embedModel, dim),
 		nil,
 	)
+
+	// Vision-language config for image understanding. When FILEPROC_VL_URL (or
+	// PLANO_LLM_GATEWAY, which planoctl sets) is present, uploaded images get a
+	// VL description + OCR cleanup via an OpenAI-compatible chat endpoint —
+	// typically Plano's internal ingress (:12010) with the "kawai-vision" alias.
+	// With no URL the VL provider stays nil and images fall back to OCR-only.
+	vlURL := os.Getenv("FILEPROC_VL_URL")
+	if vlURL == "" {
+		vlURL = os.Getenv("PLANO_LLM_GATEWAY")
+	}
+	vlModel := os.Getenv("FILEPROC_VL_MODEL")
+	if vlModel == "" {
+		vlModel = "kawai-vision"
+	}
+	vlKey := os.Getenv("FILEPROC_VL_API_KEY")
+	if vlKey == "" {
+		vlKey = os.Getenv("MODEL_API_KEY")
+	}
+	vlInternalKey := os.Getenv("PLANO_INTERNAL_KEY")
+	if vlURL != "" {
+		slog.Info("fileproc: VL enabled", "model", vlModel, "url", vlURL)
+	}
+
 	op.RegisterFileUploadedHook(func(ctx context.Context, st driver.Driver, parent string, file alistModel.Obj) {
 		if file.IsDir() {
 			return
@@ -68,7 +91,22 @@ func InitFileprocBridge() {
 			return
 		}
 		rag := fp.NewRAGProcessor(store.ChunkStore(), vec, emb, nil)
-		proc, err := fp.New(fp.Config{FileStore: store, RAGProcessor: rag})
+		cfg := fp.Config{FileStore: store, RAGProcessor: rag}
+
+		// Build the VL client per-upload so we can stamp x-arch-actor-id with the
+		// uploading user for Plano's internal-ingress billing. One client serves
+		// both roles: image description (VLProvider) + OCR cleanup (LanguageModel).
+		if vlURL != "" {
+			vc := fp.NewOpenAIChatClient(vlURL, vlKey, vlModel)
+			if vlInternalKey != "" {
+				vc.SetHeader("x-arch-internal-key", vlInternalKey)
+				vc.SetHeader("x-arch-actor-id", uid)
+			}
+			cfg.VLProvider = vc
+			cfg.LanguageModel = vc
+		}
+
+		proc, err := fp.New(cfg)
 		if err != nil {
 			slog.Error("fileproc: New", "err", err)
 			return
