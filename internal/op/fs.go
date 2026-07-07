@@ -574,8 +574,18 @@ func Put(ctx context.Context, storage driver.Driver, dstDirPath string, file mod
 		}
 	case driver.Put:
 		err = s.Put(ctx, parentDir, file, up)
-		if err == nil && !utils.IsBool(lazyCache...) {
-			ClearCache(storage, dstDirPath)
+		if err == nil {
+			if !utils.IsBool(lazyCache...) {
+				ClearCache(storage, dstDirPath)
+			}
+			// Unlike driver.PutResult, driver.Put (e.g. the Local driver) does
+			// not return the stored object — but the upload hook (fileprocessor
+			// RAG/VL ingest) still needs to fire. Fetch the freshly-stored obj so
+			// ingest runs for these drivers too; without this, uploads to Local
+			// storage silently skip ingest and knowledge_get/search never see them.
+			if newObj, e := GetUnwrap(ctx, storage, stdpath.Join(dstDirPath, file.GetName())); e == nil && newObj != nil {
+				HandleFileUploadedHook(ctx, storage, dstDirPath, newObj)
+			}
 		}
 	default:
 		return errs.NotImplement
