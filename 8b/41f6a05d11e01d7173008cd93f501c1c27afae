@@ -1,0 +1,19 @@
+cmd/bridge.go
+  s_798393252e85db::t_f6b1b353b93af4 110-120
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "8b41f6a05d11e01d7173008cd93f501c1c27afae",
+  "prompts": {},
+  "sessions": {
+    "s_798393252e85db": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4181b116-2412-4711-93eb-06f3acc1cab2",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "yudaprama <yudhaprama@icloud.com>"
+    }
+  }
+}
