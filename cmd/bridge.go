@@ -107,7 +107,17 @@ func InitFileprocBridge() {
 			slog.Error("fileproc: New", "err", err)
 			return
 		}
-		p := filepath.Join(st.GetStorage().MountPath, parent, file.GetName())
+		// Resolve the physical on-disk path. For the Local driver the file lives
+		// under its RootFolderPath (via IRootPath), NOT the virtual MountPath —
+		// using MountPath yields a bogus path like "/6741e7fd-..." that stat()
+		// can't find. Cloud drivers have no local root, so skip ingest for them.
+		rp, ok := st.(driver.IRootPath)
+		if !ok {
+			slog.Warn("fileproc: storage has no local root path; skipping ingest",
+				"driver", st.GetStorage().Driver, "file", file.GetName())
+			return
+		}
+		p := filepath.Join(rp.GetRootPath(), parent, file.GetName())
 		c, cancel := context.WithTimeout(ctx, 5*time.Minute)
 		defer cancel()
 		if _, err := proc.ProcessFile(c, fp.Request{
