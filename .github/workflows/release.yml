@@ -22,9 +22,6 @@ jobs:
           - target: linux-arm64
             runner: ubuntu-latest
             musl: true
-          - target: darwin-amd64
-            runner: macos-latest
-            musl: false
           - target: darwin-arm64
             runner: macos-latest
             musl: false
