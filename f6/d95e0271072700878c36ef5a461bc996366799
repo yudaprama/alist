@@ -1,0 +1,20 @@
+server/router.go
+  s_798393252e85db::t_9519727f2cc7dc 4-5
+  s_798393252e85db::t_f6cebcabebb2d2 265-273
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "f6d95e0271072700878c36ef5a461bc996366799",
+  "prompts": {},
+  "sessions": {
+    "s_798393252e85db": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4181b116-2412-4711-93eb-06f3acc1cab2",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "yudaprama <yudhaprama@icloud.com>"
+    }
+  }
+}
