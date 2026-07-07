@@ -1,0 +1,20 @@
+.github/workflows/release.yml
+  s_cf22a7c64e45fe::t_806f02d2766f74 58
+  s_cf22a7c64e45fe::t_5ec3735ef21278 139
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "3cc58874b40400f4549e0fdc69cc7db36aec541c",
+  "prompts": {},
+  "sessions": {
+    "s_cf22a7c64e45fe": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_0c3acc01cffeacqdH6sHzlRdit",
+        "model": "mimo-v2.5-free"
+      },
+      "human_author": "yudaprama <yudhaprama@icloud.com>"
+    }
+  }
+}
