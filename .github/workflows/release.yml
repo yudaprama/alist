@@ -55,8 +55,7 @@ jobs:
       - name: Determine version
         id: ver
         run: |
-          COMMIT_COUNT=$(git rev-list --count HEAD)
-          VERSION="v${COMMIT_COUNT}"
+          VERSION="v${GITHUB_RUN_NUMBER}"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "Version: $VERSION"
 
@@ -137,8 +136,7 @@ jobs:
       - name: Determine version
         id: ver
         run: |
-          COMMIT_COUNT=$(git rev-list --count HEAD)
-          VERSION="v${COMMIT_COUNT}"
+          VERSION="v${GITHUB_RUN_NUMBER}"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "Version: $VERSION"
 
