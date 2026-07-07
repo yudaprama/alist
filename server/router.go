@@ -1,6 +1,8 @@
 package server
 
 import (
+	"os"
+
 	"github.com/alist-org/alist/v3/cmd/flags"
 	"github.com/alist-org/alist/v3/internal/conf"
 	"github.com/alist-org/alist/v3/internal/message"
@@ -260,6 +262,15 @@ func _labelFileBinding(g *gin.RouterGroup) {
 }
 
 func Cors(r *gin.Engine) {
+	// When AList runs behind an edge proxy that is itself the CORS authority
+	// (Ory Oathkeeper in the kawai stack), AList must NOT set its own CORS
+	// headers: the edge already adds Access-Control-Allow-Origin, and a second
+	// one from AList (the default is "*") makes the browser reject the response
+	// ("multiple values ... but only one is allowed"). planoctl sets
+	// ALIST_DISABLE_CORS=true for exactly this reason.
+	if os.Getenv("ALIST_DISABLE_CORS") == "true" {
+		return
+	}
 	config := cors.DefaultConfig()
 	// config.AllowAllOrigins = true
 	config.AllowOrigins = conf.Conf.Cors.AllowOrigins
