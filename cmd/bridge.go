@@ -15,6 +15,14 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
+const (
+	// vlEndpoint is Plano's loopback-only internal model ingress; the bridge
+	// routes image understanding here so each hop skips the Oathkeeper round-trip.
+	vlEndpoint = "http://localhost:12010/v1"
+	// vlModel is the Plano brand alias that fans out to the real VL backends.
+	vlModel = "kawai-vision"
+)
+
 func InitFileprocBridge() {
 	dsn := os.Getenv("FILEPROC_PG_DSN")
 	if dsn == "" {
@@ -55,26 +63,14 @@ func InitFileprocBridge() {
 		nil,
 	)
 
-	// Vision-language config for image understanding. When FILEPROC_VL_URL (or
-	// PLANO_LLM_GATEWAY, which planoctl sets) is present, uploaded images get a
-	// VL description + OCR cleanup via an OpenAI-compatible chat endpoint —
-	// typically Plano's internal ingress (:12010) with the "kawai-vision" alias.
-	// With no URL the VL provider stays nil and images fall back to OCR-only.
-	vlURL := os.Getenv("FILEPROC_VL_URL")
-	if vlURL == "" {
-		vlURL = os.Getenv("PLANO_LLM_GATEWAY")
-	}
-	vlModel := os.Getenv("FILEPROC_VL_MODEL")
-	if vlModel == "" {
-		vlModel = "kawai-vision"
-	}
-	vlKey := os.Getenv("FILEPROC_VL_API_KEY")
-	if vlKey == "" {
-		vlKey = os.Getenv("MODEL_API_KEY")
-	}
+	// Image understanding needs zero setup: the only input is PLANO_INTERNAL_KEY,
+	// which planoctl mints automatically. When present, uploaded images get a
+	// "kawai-vision" description + OCR cleanup via Plano's internal ingress
+	// (:12010, loopback). When absent (e.g. alist run standalone) VL stays off
+	// and images fall back to OCR-only.
 	vlInternalKey := os.Getenv("PLANO_INTERNAL_KEY")
-	if vlURL != "" {
-		slog.Info("fileproc: VL enabled", "model", vlModel, "url", vlURL)
+	if vlInternalKey != "" {
+		slog.Info("fileproc: VL enabled", "model", vlModel, "endpoint", vlEndpoint)
 	}
 
 	op.RegisterFileUploadedHook(func(ctx context.Context, st driver.Driver, parent string, file alistModel.Obj) {
@@ -93,15 +89,15 @@ func InitFileprocBridge() {
 		rag := fp.NewRAGProcessor(store.ChunkStore(), vec, emb, nil)
 		cfg := fp.Config{FileStore: store, RAGProcessor: rag}
 
-		// Build the VL client per-upload so we can stamp x-arch-actor-id with the
-		// uploading user for Plano's internal-ingress billing. One client serves
-		// both roles: image description (VLProvider) + OCR cleanup (LanguageModel).
-		if vlURL != "" {
-			vc := fp.NewOpenAIChatClient(vlURL, vlKey, vlModel)
-			if vlInternalKey != "" {
-				vc.SetHeader("x-arch-internal-key", vlInternalKey)
-				vc.SetHeader("x-arch-actor-id", uid)
-			}
+		// Build the VL client per-upload so x-arch-actor-id bills the uploading
+		// user. One client serves both roles: image description (VLProvider) +
+		// OCR cleanup (LanguageModel). No Bearer key — the internal ingress
+		// authenticates via x-arch-internal-key and brightstaff swaps in the real
+		// provider key for the resolved kawai-vision backend.
+		if vlInternalKey != "" {
+			vc := fp.NewOpenAIChatClient(vlEndpoint, "", vlModel)
+			vc.SetHeader("x-arch-internal-key", vlInternalKey)
+			vc.SetHeader("x-arch-actor-id", uid)
 			cfg.VLProvider = vc
 			cfg.LanguageModel = vc
 		}
