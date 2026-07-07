@@ -408,8 +408,8 @@ github.com/json-iterator/go v1.1.12 h1:PV8peI4a0ysnczrg+LtxykD8LfKY9ML6u2jnxaEnr
 github.com/json-iterator/go v1.1.12/go.mod h1:e30LSqwooZae/UwlEbR2852Gd8hjQvJoHmT4TnhNGBo=
 github.com/jzelinskie/whirlpool v0.0.0-20201016144138-0675e54bb004 h1:G+9t9cEtnC9jFiTxyptEKuNIAbiN5ZCQzX2a74lj3xg=
 github.com/jzelinskie/whirlpool v0.0.0-20201016144138-0675e54bb004/go.mod h1:KmHnJWQrgEvbuy0vcvj00gtMqbvNn1L+3YUZLK/B92c=
-github.com/kawai-network/fileprocessor v0.4.1 h1:tn08Ut5FGcGs4WZQICCuwF/P4SR5bzIXmAjIJ5kd8OA=
-github.com/kawai-network/fileprocessor v0.4.1/go.mod h1:iGGlxqKrYX74fhbLw8LBT6JquWnWgfc4iHhU3y8HNdc=
+github.com/kawai-network/fileprocessor v0.5.0 h1:HeS6cNSl6+QeJCzW+GP5YeWPYzOPzF+lGMq/EVMKR5s=
+github.com/kawai-network/fileprocessor v0.5.0/go.mod h1:iGGlxqKrYX74fhbLw8LBT6JquWnWgfc4iHhU3y8HNdc=
 github.com/kawai-network/x v1.0.47 h1:rxqZaCqpV3l7C9x+aE/FKJCfexHJGGCR8cF2NRqBOcE=
 github.com/kawai-network/x v1.0.47/go.mod h1:bbBaImmORUuwFvzbjCToFvzPWH4ou/ZFHLjM29dfbWY=
 github.com/kdomanski/iso9660 v0.4.0 h1:BPKKdcINz3m0MdjIMwS0wx1nofsOjxOq8TOr45WGHFg=
