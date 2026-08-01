@@ -81,6 +81,7 @@ func InitFileprocBridge() {
 		if uid == "" {
 			return
 		}
+		uploadID, _ := ctx.Value("upload_id").(string)
 		store, err := fp.NewPostgresFileStoreWithPool(pool, fp.PostgresFileStoreOwner{UserID: uid})
 		if err != nil {
 			slog.Error("fileproc: NewPostgresFileStoreWithPool", "err", err)
@@ -121,7 +122,7 @@ func InitFileprocBridge() {
 		c, cancel := context.WithTimeout(ctx, 5*time.Minute)
 		defer cancel()
 		if _, err := proc.ProcessFile(c, fp.Request{
-			FilePath: p, Filename: file.GetName(), Source: "alist://" + uid, EnableRAG: true,
+			FilePath: p, Filename: file.GetName(), Source: "alist://" + uid, EnableRAG: true, FileID: uploadID,
 		}); err != nil {
 			slog.Error("fileproc: ProcessFile", "err", err, "path", p)
 		}
