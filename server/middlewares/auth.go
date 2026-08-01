@@ -25,6 +25,13 @@ import (
 //
 // if token is empty, set user to guest
 func Auth(c *gin.Context) {
+	// Propagate an optional client upload id to downstream handlers + hooks.
+	// The fileprocessor RAG bridge reads ctx.Value("upload_id") to pin the
+	// files.id of the ingested row, so the client can associate the upload
+	// (e.g. attach it to a project) by exact id instead of polling by name.
+	if uploadID := c.GetHeader("X-Upload-Id"); uploadID != "" {
+		c.Set("upload_id", uploadID)
+	}
 	if identityID := c.GetHeader("X-User-Id"); identityID != "" {
 		traits := map[string]interface{}{}
 		if email := headerTrait(c, "X-User-Traits-Email"); email != "" {
