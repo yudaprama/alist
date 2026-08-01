@@ -1,0 +1,26 @@
+server/middlewares/auth.go
+  s_a5436ec4520e75::t_53d87c835701c1 28-34
+cmd/bridge.go
+  s_a5436ec4520e75::t_fe814a4482edb0 84
+  s_a5436ec4520e75::t_dbe56c4b3b02be 125
+go.mod
+  s_a5436ec4520e75::t_6f4bfb3138045c 49
+go.sum
+  s_a5436ec4520e75::t_f7c5105fa5f5c5 411-412
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.19",
+  "base_commit_sha": "551f0dcb27174f3c746fc2c93a5f5bda96002c7a",
+  "prompts": {},
+  "sessions": {
+    "s_a5436ec4520e75": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_041625328ffei4ocJm3wiWpwZc",
+        "model": "glm-5.2"
+      },
+      "human_author": "yudaprama <yudhaprama@icloud.com>"
+    }
+  }
+}
