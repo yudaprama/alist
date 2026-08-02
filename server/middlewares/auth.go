@@ -73,6 +73,9 @@ func Auth(c *gin.Context) {
 		// ingest per user; gin's Context.Value resolves string keys set via
 		// c.Set, and fs.PutDirectly threads this context into the upload hook.
 		c.Set("kratos_identity_id", identityID)
+		// Preserve the edge-authoritative workspace identity for fileprocessor
+		// so RAG rows are written with the same tenant used during retrieval.
+		c.Set("kratos_tenant_id", c.GetHeader("X-Tenant-Id"))
 		log.Debugf("use oathkeeper kratos identity: %+v", kratosUser)
 		c.Next()
 		return

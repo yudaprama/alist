@@ -11,8 +11,8 @@ import (
 	alistModel "github.com/alist-org/alist/v3/internal/model"
 	"github.com/alist-org/alist/v3/internal/op"
 
-	fp "github.com/kawai-network/fileprocessor"
 	"github.com/jackc/pgx/v5/pgxpool"
+	fp "github.com/kawai-network/fileprocessor"
 )
 
 const (
@@ -81,8 +81,15 @@ func InitFileprocBridge() {
 		if uid == "" {
 			return
 		}
+		tenantID, _ := ctx.Value("kratos_tenant_id").(string)
+		if tenantID == "" {
+			slog.Warn("fileproc: missing tenant identity; skipping ingest", "user_id", uid)
+			return
+		}
 		uploadID, _ := ctx.Value("upload_id").(string)
-		store, err := fp.NewPostgresFileStoreWithPool(pool, fp.PostgresFileStoreOwner{UserID: uid})
+		store, err := fp.NewPostgresFileStoreWithPool(pool, fp.PostgresFileStoreOwner{
+			UserID: uid, TenantID: tenantID,
+		})
 		if err != nil {
 			slog.Error("fileproc: NewPostgresFileStoreWithPool", "err", err)
 			return
