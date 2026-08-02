@@ -336,5 +336,3 @@ replace github.com/ProtonMail/go-proton-api => github.com/henrybear327/go-proton
 replace github.com/cronokirby/saferith => github.com/Da3zKi7/saferith v0.33.0-fixed
 
 replace github.com/SheltonZhu/115driver => github.com/okatu-loli/115driver v1.2.3-1
-
-replace github.com/yudaprama/tools => ../tools
