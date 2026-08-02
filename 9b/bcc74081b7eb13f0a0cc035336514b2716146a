@@ -1,0 +1,22 @@
+cmd/bridge.go
+  s_10cdd549e06765::t_60994ab12de969 15
+  s_10cdd549e06765::t_e27427a178232c 84-88,90-92
+server/middlewares/auth.go
+  s_10cdd549e06765::t_062d28273aa1ea 76-78
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.19",
+  "base_commit_sha": "9bbcc74081b7eb13f0a0cc035336514b2716146a",
+  "prompts": {},
+  "sessions": {
+    "s_10cdd549e06765": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fbe8b-519a-7842-a17f-64db127bab51",
+        "model": "gpt-5.6-luna"
+      },
+      "human_author": "yudaprama <yudhaprama@icloud.com>"
+    }
+  }
+}
