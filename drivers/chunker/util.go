@@ -855,7 +855,7 @@ func (d *Chunker) openChunkReader(ctx context.Context, parts []linkedPart, total
 		if req.Start > partStart {
 			localStart = req.Start - partStart
 		}
-		localLength := utils.Min(part.part.Size-localStart, remaining)
+		localLength := min(part.part.Size-localStart, remaining)
 		rc, err := d.openPartRange(ctx, part.link, part.part.Size, localStart, localLength)
 		if err != nil {
 			_ = closers.Close()

@@ -367,7 +367,7 @@ func (d *Chunker) Put(ctx context.Context, dstDir model.Obj, streamer model.File
 	keepLocations := make([]objectLocation, 0, len(d.remoteTargets)+1)
 	ensuredTargets := map[int]struct{}{0: {}}
 	for remaining > 0 {
-		chunkLen := utils.Min(remaining, d.ChunkSize)
+		chunkLen := min(remaining, d.ChunkSize)
 		targetIndex := d.chunkTargetIndex(chunkCount)
 		if _, ok := ensuredTargets[targetIndex]; !ok {
 			if err := d.ensureDirOnTarget(ctx, targetIndex, dstDir.GetPath()); err != nil {

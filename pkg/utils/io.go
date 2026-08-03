@@ -9,8 +9,6 @@ import (
 	"sync"
 	"time"
 
-	"golang.org/x/exp/constraints"
-
 	log "github.com/sirupsen/logrus"
 )
 
@@ -191,19 +189,6 @@ func EmptyClosers() Closers {
 }
 func NewClosers(c ...io.Closer) Closers {
 	return Closers{c}
-}
-
-func Min[T constraints.Ordered](a, b T) T {
-	if a < b {
-		return a
-	}
-	return b
-}
-func Max[T constraints.Ordered](a, b T) T {
-	if a < b {
-		return b
-	}
-	return a
 }
 
 var IoBuffPool = &sync.Pool{

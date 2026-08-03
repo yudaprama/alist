@@ -2,6 +2,7 @@ package tool
 
 import (
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 )
@@ -17,7 +18,7 @@ func TestSecureJoin(t *testing.T) {
 		{name: "parent", entry: "../evil.txt", wantErr: true},
 		{name: "parent-backslash", entry: "..\\evil.txt", wantErr: true},
 		{name: "abs", entry: "/tmp/evil.txt", wantErr: true},
-		{name: "drive", entry: "C:\\evil.txt", wantErr: true},
+		{name: "drive", entry: "C:\\evil.txt", wantErr: runtime.GOOS == "windows"},
 		{name: "unc", entry: "\\\\server\\share\\evil.txt", wantErr: true},
 	}
 

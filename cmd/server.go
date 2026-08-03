@@ -57,7 +57,7 @@ the address is defined in config file`,
 		if conf.Conf.Scheme.EnableH2c {
 			httpHandler = h2c.NewHandler(r, &http2.Server{})
 		}
-		var httpSrv, httpsSrv, unixSrv *http.Server
+		var httpSrv, httpsSrv, unixSrv, s3Srv *http.Server
 		if conf.Conf.Scheme.HttpPort != -1 {
 			httpBase := fmt.Sprintf("%s:%d", conf.Conf.Scheme.Address, conf.Conf.Scheme.HttpPort)
 			utils.Log.Infof("start HTTP server @ %s", httpBase)
@@ -110,15 +110,13 @@ the address is defined in config file`,
 			server.InitS3(s3r)
 			s3Base := fmt.Sprintf("%s:%d", conf.Conf.Scheme.Address, conf.Conf.S3.Port)
 			utils.Log.Infof("start S3 server @ %s", s3Base)
+			s3Srv = &http.Server{Addr: s3Base, Handler: s3r}
 			go func() {
 				var err error
 				if conf.Conf.S3.SSL {
-					httpsSrv = &http.Server{Addr: s3Base, Handler: s3r}
-					err = httpsSrv.ListenAndServeTLS(conf.Conf.Scheme.CertFile, conf.Conf.Scheme.KeyFile)
-				}
-				if !conf.Conf.S3.SSL {
-					httpSrv = &http.Server{Addr: s3Base, Handler: s3r}
-					err = httpSrv.ListenAndServe()
+					err = s3Srv.ListenAndServeTLS(conf.Conf.Scheme.CertFile, conf.Conf.Scheme.KeyFile)
+				} else {
+					err = s3Srv.ListenAndServe()
 				}
 				if err != nil && !errors.Is(err, http.ErrServerClosed) {
 					utils.Log.Fatalf("failed to start s3 server: %s", err.Error())
@@ -134,8 +132,8 @@ the address is defined in config file`,
 				utils.Log.Fatalf("failed to start ftp driver: %s", err.Error())
 			} else {
 				utils.Log.Infof("start ftp server on %s", conf.Conf.FTP.Listen)
+				ftpServer = ftpserver.NewFtpServer(ftpDriver)
 				go func() {
-					ftpServer = ftpserver.NewFtpServer(ftpDriver)
 					err = ftpServer.ListenAndServe()
 					if err != nil {
 						utils.Log.Fatalf("problem ftp server listening: %s", err.Error())
@@ -152,8 +150,8 @@ the address is defined in config file`,
 				utils.Log.Fatalf("failed to start sftp driver: %s", err.Error())
 			} else {
 				utils.Log.Infof("start sftp server on %s", conf.Conf.SFTP.Listen)
+				sftpServer = sftpd.NewSftpServer(sftpDriver)
 				go func() {
-					sftpServer = sftpd.NewSftpServer(sftpDriver)
 					err = sftpServer.RunServer()
 					if err != nil {
 						utils.Log.Fatalf("problem sftp server listening: %s", err.Error())
@@ -213,6 +211,15 @@ the address is defined in config file`,
 				defer wg.Done()
 				if err := unixSrv.Shutdown(ctx); err != nil {
 					utils.Log.Fatal("Unix server shutdown err: ", err)
+				}
+			}()
+		}
+		if conf.Conf.S3.Port != -1 && conf.Conf.S3.Enable && s3Srv != nil {
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				if err := s3Srv.Shutdown(ctx); err != nil {
+					utils.Log.Fatal("S3 server shutdown err: ", err)
 				}
 			}()
 		}

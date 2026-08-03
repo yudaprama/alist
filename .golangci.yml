@@ -1,0 +1,14 @@
+run:
+  timeout: 5m
+
+linters:
+  enable:
+    - gofmt
+    - goimports
+    - govet
+  disable-all: true
+
+issues:
+  exclude:
+    - "non-constant format string"
+    - "struct literal uses unkeyed fields"

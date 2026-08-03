@@ -1,32 +1,18 @@
 package utils
 
 import (
-	"strings"
-
-	"github.com/pkg/errors"
+	"errors"
+	"slices"
 )
 
 // SliceEqual check if two slices are equal
 func SliceEqual[T comparable](a, b []T) bool {
-	if len(a) != len(b) {
-		return false
-	}
-	for i, v := range a {
-		if v != b[i] {
-			return false
-		}
-	}
-	return true
+	return slices.Equal(a, b)
 }
 
 // SliceContains check if slice contains element
 func SliceContains[T comparable](arr []T, v T) bool {
-	for _, vv := range arr {
-		if vv == v {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(arr, v)
 }
 
 // SliceAllContains check if slice all contains elements
@@ -66,13 +52,7 @@ func MustSliceConvert[S any, D any](srcS []S, convert func(src S) D) []D {
 }
 
 func MergeErrors(errs ...error) error {
-	errStr := strings.Join(MustSliceConvert(errs, func(err error) string {
-		return err.Error()
-	}), "\n")
-	if errStr != "" {
-		return errors.New(errStr)
-	}
-	return nil
+	return errors.Join(errs...)
 }
 
 func SliceMeet[T1, T2 any](arr []T1, v T2, meet func(item T1, v T2) bool) bool {
