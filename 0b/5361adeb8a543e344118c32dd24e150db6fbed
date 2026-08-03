@@ -1,0 +1,59 @@
+pkg/utils/ip.go
+  s_2ef1c228fe0de6::t_11e9051ce55147 36
+.github/workflows/ci.yml
+  s_2ef1c228fe0de6::t_dea36f9a24fdce 38-45
+  s_2ef1c228fe0de6::t_d6e343495d5fb4 1-36
+  s_2ef1c228fe0de6::t_e6d293dd627e55 37,46
+pkg/singleflight/singleflight_test.go
+  s_2ef1c228fe0de6::t_c1426d117025db 1-320
+drivers/chunker/util.go
+  s_2ef1c228fe0de6::t_99403c4a4cf687 858
+go.mod
+  s_2ef1c228fe0de6::t_c1426d117025db 101,103,105,108-109,118,127-128,139,141,151,153,166-169
+pkg/utils/map.go
+  s_2ef1c228fe0de6::t_92e2e54ccd8d1c 3-4,8
+drivers/lark.go
+  s_2ef1c228fe0de6::t_5ee89f30fa56f3 1
+.golangci.yml
+  s_2ef1c228fe0de6::t_64e366cdf512b9 1-14
+server/s3/backend.go
+  s_2ef1c228fe0de6::t_2477c87e5292f3 331
+drivers/chunker/driver.go
+  s_2ef1c228fe0de6::t_bceddeadd2838c 370
+pkg/utils/hash.go
+  s_2ef1c228fe0de6::t_d0c86c1355beea 185
+cmd/server.go
+  s_2ef1c228fe0de6::t_61836a223a54af 113,117-119
+  s_2ef1c228fe0de6::t_eb29a881d4661a 60
+  s_2ef1c228fe0de6::t_c3c95284e0b737 153
+  s_2ef1c228fe0de6::t_ba2b9c41dabc89 217-225
+  s_2ef1c228fe0de6::t_1e1713c686f535 135
+cmd/cancel_2fa.go
+  s_2ef1c228fe0de6::t_c1426d117025db 1-46
+internal/archive/tool/securepath_test.go
+  s_2ef1c228fe0de6::t_a445c8c3077620 5,21
+pkg/aria2/rpc/call.go
+  s_2ef1c228fe0de6::t_e76dbb33c6a729 239
+  s_2ef1c228fe0de6::t_4104f89b86a06b 123
+pkg/utils/slice.go
+  s_2ef1c228fe0de6::t_0fb17e34462a49 4-5,10,15
+  s_2ef1c228fe0de6::t_daefa166bdd0dd 55
+go.sum
+  s_2ef1c228fe0de6::t_6cfcd4dca0695b 69,99-100,105,147,158-161,173,199-200,230-231,234-235,270,277-278,315,359-360,370-373,402,434-435,438,508-509,564-565,568-569,574-576,602,637-638,646,666,674-679,698,765-768,785-786,830,866-867,870,914-915,1048,1057-1058,1085-1112
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.20",
+  "base_commit_sha": "0b5361adeb8a543e344118c32dd24e150db6fbed",
+  "prompts": {},
+  "sessions": {
+    "s_2ef1c228fe0de6": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_039694410ffeUlg6xJJckwZLhZ",
+        "model": "kawai-pro-max"
+      },
+      "human_author": "yudaprama <yudhaprama@icloud.com>"
+    }
+  }
+}
