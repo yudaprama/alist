@@ -1,0 +1,19 @@
+.gitignore
+  s_6e378fbe1896d2::t_0cdcef645a243f 35
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.20",
+  "base_commit_sha": "8b9221e8f229c5ef130b8b082c01d6dacc125551",
+  "prompts": {},
+  "sessions": {
+    "s_6e378fbe1896d2": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_039ba4925ffeizUyWC1Zk8Av7X",
+        "model": "kawai-pro-max"
+      },
+      "human_author": "yudaprama <yudhaprama@icloud.com>"
+    }
+  }
+}
