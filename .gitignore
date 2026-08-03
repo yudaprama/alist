@@ -32,5 +32,6 @@ output/
 !/public/dist/README.md
 
 .VSCodeCounter
+.codegraph/
 docs/.vuepress
 alist
