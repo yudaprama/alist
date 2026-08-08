@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/alist-org/alist/v3/internal/driver"
@@ -39,24 +40,22 @@ func InitFileprocBridge() {
 		slog.Warn("fileproc: NewPublicEmbeddingsStoreWithPool failed (disabled)", "err", err)
 		return
 	}
-	// Embedder config mirrors egent-jobs/embeddings + egent-lobehub/knowledge so
+	// Embedder config mirrors egent-jobs/embeddings + egent-tools/knowledge so
 	// every writer/reader of public.embeddings shares one provider + dimension.
-	// A real API key is REQUIRED — with an empty key the embed call 401s and
-	// ingest silently produces no vectors.
-	embedURL := os.Getenv("OPENAI_EMBEDDINGS_URL")
+	// Uses NVIDIA NIM (free tier). API key from NVIDIA_API_KEYS.
+	embedURL := os.Getenv("EMBEDDINGS_URL")
 	if embedURL == "" {
-		embedURL = "https://api.openai.com/v1/embeddings"
+		embedURL = "https://integrate.api.nvidia.com/v1"
 	}
-	embedModel := os.Getenv("OPENAI_EMBEDDINGS_MODEL")
+	embedModel := os.Getenv("EMBEDDINGS_MODEL")
 	if embedModel == "" {
-		embedModel = "text-embedding-3-small"
+		embedModel = "nvidia/nv-embedqa-e5-v5"
 	}
-	embedKey := os.Getenv("OPENAI_API_KEY")
-	if embedKey == "" {
-		embedKey = os.Getenv("MODEL_API_KEY")
-	}
-	if embedKey == "" {
-		slog.Warn("fileproc: no embedder API key (OPENAI_API_KEY/MODEL_API_KEY) — RAG ingest will fail to embed")
+	embedKey := os.Getenv("NVIDIA_API_KEYS")
+	if embedKey != "" {
+		embedKey = strings.Split(embedKey, ",")[0]
+	} else {
+		slog.Warn("fileproc: no NVIDIA_API_KEYS — RAG ingest will fail to embed")
 	}
 	emb := fp.NewEmbeddingCache(
 		fp.NewOpenAIEmbedder(embedURL, embedKey, embedModel, dim),
