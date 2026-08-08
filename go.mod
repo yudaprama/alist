@@ -122,6 +122,7 @@ require (
 	github.com/holiman/uint256 v1.3.2 // indirect
 	github.com/kawai-network/x v1.0.47 // indirect
 	github.com/klauspost/reedsolomon v1.12.0 // indirect
+	github.com/lib/pq v1.12.3 // indirect
 	github.com/mikelolasagasti/xz v1.0.1 // indirect
 	github.com/minio/minlz v1.0.1 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
