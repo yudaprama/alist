@@ -1,8 +1,13 @@
 package cmd
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
+	"fmt"
+	"io"
 	"log/slog"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -58,7 +63,7 @@ func InitFileprocBridge() {
 		slog.Warn("fileproc: no NVIDIA_API_KEYS — RAG ingest will fail to embed")
 	}
 	emb := fp.NewEmbeddingCache(
-		fp.NewOpenAIEmbedder(embedURL, embedKey, embedModel, dim),
+		&alistNvidiaEmbedder{url: embedURL + "/embeddings", apiKey: embedKey, model: embedModel, dim: dim},
 		nil,
 	)
 
@@ -135,3 +140,57 @@ func InitFileprocBridge() {
 	})
 	slog.Info("fileproc: registered", "dim", dim)
 }
+
+// alistNvidiaEmbedder sends input_type (required by NVIDIA) and omits
+// dimensions (unsupported by NVIDIA). Matches the write-path embedder
+// in egent-jobs/embeddings.
+type alistNvidiaEmbedder struct {
+	url    string
+	apiKey string
+	model  string
+	dim    int
+}
+
+func (e *alistNvidiaEmbedder) Embed(ctx context.Context, texts []string) ([][]float32, error) {
+	if len(texts) == 0 {
+		return nil, nil
+	}
+	results := make([][]float32, len(texts))
+	for i, t := range texts {
+		body, _ := json.Marshal(map[string]any{
+			"input":      t,
+			"model":      e.model,
+			"input_type": "passage",
+		})
+		req, err := http.NewRequestWithContext(ctx, "POST", e.url, bytes.NewReader(body))
+		if err != nil {
+			return nil, err
+		}
+		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("Authorization", "Bearer "+e.apiKey)
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			return nil, err
+		}
+		defer resp.Body.Close()
+		raw, _ := io.ReadAll(resp.Body)
+		if resp.StatusCode != http.StatusOK {
+			return nil, fmt.Errorf("nvidia: HTTP %d: %s", resp.StatusCode, string(raw))
+		}
+		var parsed struct {
+			Data []struct {
+				Embedding []float32 `json:"embedding"`
+			} `json:"data"`
+		}
+		if err := json.Unmarshal(raw, &parsed); err != nil {
+			return nil, err
+		}
+		if len(parsed.Data) == 0 {
+			return nil, fmt.Errorf("nvidia: empty response")
+		}
+		results[i] = parsed.Data[0].Embedding
+	}
+	return results, nil
+}
+
+func (e *alistNvidiaEmbedder) Dimension() int { return e.dim }
